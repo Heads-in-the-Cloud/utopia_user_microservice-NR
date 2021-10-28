@@ -42,4 +42,8 @@ public class UserService {
             return Optional.of(userRepository.save(u));
         } else return Optional.empty();
     }
+
+    public void deleteUserById(int id) {
+        userRepository.deleteById(id);
+    }
 }

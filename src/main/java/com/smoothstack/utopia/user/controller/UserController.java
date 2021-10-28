@@ -40,4 +40,9 @@ public class UserController {
         return u.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @DeleteMapping(path = "/delete/{id}")
+    public ResponseEntity<User> deleteUserById(@PathVariable int id) {
+        userService.deleteUserById(id);
+        return ResponseEntity.ok(null);
+    }
 }
