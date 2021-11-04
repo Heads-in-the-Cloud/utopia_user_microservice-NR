@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "/api/user")
+@RequestMapping(path = "/api/users")
 public class UserController {
 
     @Autowired
@@ -22,7 +22,7 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping(path = "{id}")
+    @GetMapping(path = "/{id}")
     public ResponseEntity<User> findUserById(@PathVariable int id) {
         Optional<User> u = userService.findUserById(id);
         return u.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
@@ -31,7 +31,7 @@ public class UserController {
     @PostMapping(path = "/add")
     public ResponseEntity<User> addUser(@RequestBody User user) {
         Optional<User> u = userService.addUser(user);
-        return u.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null));
+        return u.map(value -> ResponseEntity.status(201).body(value)).orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null));
     }
 
     @PutMapping(path = "/edit/{id}")

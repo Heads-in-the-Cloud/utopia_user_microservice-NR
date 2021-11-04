@@ -1,21 +1,21 @@
 package com.smoothstack.utopia.user.service;
 
 import com.smoothstack.utopia.user.entity.User;
-import com.smoothstack.utopia.user.entity.UserRole;
 import com.smoothstack.utopia.user.repository.UserRepository;
-import com.smoothstack.utopia.user.repository.UserRoleRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private UserRoleRepository userRoleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -27,10 +27,9 @@ public class UserService {
 
     public Optional<User> addUser(User user) {
         if (user.isComplete()) {
-            UserRole ur = userRoleRepository.getById(user.getUserRole().getId());
-            return Optional.of(userRepository.save(user));
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            return Optional.of(userRepository.saveAndFlush(user));
         } else {
-            System.out.println(user);
             return Optional.empty();
         }
     }

@@ -1,5 +1,6 @@
 package com.smoothstack.utopia.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -24,6 +25,7 @@ public class User {
     private String password;
     private String phone;
 
+    @JsonIgnore
     public boolean isComplete() {
         return userRole != null && userRole.getId() > 0 && userRole.getId() < 5 && givenName != null && familyName != null && username != null && email != null && password != null && phone != null;
     }
