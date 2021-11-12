@@ -4,6 +4,7 @@ import com.smoothstack.utopia.user.filter.JwtAuthenticationVerificationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,8 +25,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        //http.authorizeRequests().antMatchers(GET, "/api/flights/**").hasAnyAuthority("ROLE_TRAVELER", "ROLE_EMPLOYEE", "ROLE_ADMIN");
-        //http.authorizeRequests().antMatchers(POST, "/api/flights/**").hasAnyAuthority("ROLE_ADMIN");
+        http.authorizeRequests().antMatchers(HttpMethod.POST, "/api/users/add").permitAll();
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(new JwtAuthenticationVerificationFilter(authenticationManagerBean()));
     }

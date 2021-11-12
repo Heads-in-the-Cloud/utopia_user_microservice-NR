@@ -5,6 +5,7 @@ import com.smoothstack.utopia.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +19,13 @@ public class UserController {
     private UserService userService;
 
     @GetMapping(path = "/all")
+    @PreAuthorize("hasAuthority('Administrator')")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping(path = "/{id}")
+    @PreAuthorize("hasAuthority('Administrator')")
     public ResponseEntity<User> findUserById(@PathVariable int id) {
         Optional<User> u = userService.findUserById(id);
         return u.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
@@ -35,12 +38,14 @@ public class UserController {
     }
 
     @PutMapping(path = "/edit/{id}")
+    @PreAuthorize("hasAuthority('Administrator')")
     public ResponseEntity<User> updateUserById(@PathVariable int id, @RequestBody User user) {
         Optional<User> u = userService.updateUserById(id, user);
         return u.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @DeleteMapping(path = "/delete/{id}")
+    @PreAuthorize("hasAuthority('Administrator')")
     public ResponseEntity<User> deleteUserById(@PathVariable int id) {
         userService.deleteUserById(id);
         return ResponseEntity.ok(null);
