@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.smoothstack.utopia.user.security.EnvConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,8 +27,11 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Component
 public class JwtAuthenticationVerificationFilter extends BasicAuthenticationFilter {
 
-    public JwtAuthenticationVerificationFilter(AuthenticationManager authenticationManager) {
+    private final EnvConfig envConfig;
+
+    public JwtAuthenticationVerificationFilter(AuthenticationManager authenticationManager, EnvConfig envConfig) {
         super(authenticationManager);
+        this.envConfig = envConfig;
     }
 
     @Override
@@ -54,23 +58,19 @@ public class JwtAuthenticationVerificationFilter extends BasicAuthenticationFilt
         if (token == null) {
             return null;
         }
-
-        DecodedJWT jwt = JWT.require(Algorithm.HMAC256("secret"))
+        DecodedJWT jwt = JWT.require(Algorithm.HMAC256(envConfig.getSecret()))
                 .build()
                 .verify(token.replace("Bearer ", ""));
 
         String subject = jwt.getSubject();
-
         if (subject == null) {
             return null;
         }
-
         List<SimpleGrantedAuthority> authorities = jwt.getClaim("roles")
                 .asList(String.class)
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-
         return new UsernamePasswordAuthenticationToken(subject, null, authorities);
     }
 }
