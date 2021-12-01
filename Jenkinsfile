@@ -19,7 +19,7 @@ pipeline {
         }
         stage('Docker') {
             steps {
-                sh 'docker build -t users .'
+                sh 'docker build -t user .'
             }
         }
     }
