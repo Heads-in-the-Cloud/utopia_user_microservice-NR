@@ -50,9 +50,4 @@ public class UserController {
         userService.deleteUserById(id);
         return ResponseEntity.ok(null);
     }
-
-    @GetMapping(path = "/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("OK");
-    }
 }
