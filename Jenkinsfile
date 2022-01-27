@@ -5,7 +5,7 @@ pipeline {
         API_REPO_NAME = 'nr-utopia-user'
         AWS_REGION_ID = "${sh(script:'aws configure get region', returnStdout: true).trim()}"
         AWS_ACCOUNT_ID = "${sh(script:'aws sts get-caller-identity --query "Account" --output text', returnStdout: true).trim()}"
-        UTOPIA_MICROSERVICE_AUTH_PORT=credentials('nr_utopia_users_port')
+        UTOPIA_MICROSERVICE_USERS_PORT=credentials('nr_utopia_users_port')
         UTOPIA_DB_PORT=credentials('nr_utopia_db_port')
         UTOPIA_DB_HOST=credentials('nr_utopia_db_host')
         UTOPIA_DB_NAME=credentials('nr_utopia_db_name')
