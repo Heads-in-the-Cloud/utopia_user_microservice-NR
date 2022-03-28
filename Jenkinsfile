@@ -2,6 +2,7 @@ pipeline {
     agent { label 'aws-ready' }
 
     environment {
+        COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse --short=8 HEAD").trim()
         API_REPO_NAME = 'nr-utopia-user'
         AWS_REGION_ID = "${sh(script:'aws configure get region', returnStdout: true).trim()}"
         AWS_ACCOUNT_ID = "${sh(script:'aws sts get-caller-identity --query "Account" --output text', returnStdout: true).trim()}"
@@ -13,22 +14,35 @@ pipeline {
         UTOPIA_DB_USER="${env.UTOPIA_DB_LOGIN_USR}"
         UTOPIA_DB_PASSWORD="${env.UTOPIA_DB_LOGIN_PSW}"
         UTOPIA_JWT_SECRET=credentials('nr_utopia_jwt_secret')
+        AWS_PROFILE=credentials('nr_aws_profile')
         SONARQUBE_ID = tool name: 'SonarQubeScanner-4.6.2'
+
+        ECR_REPO="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ID}.amazonaws.com"
+
+        ART_REPO_ENDPOINT = credentials("AM_ARTIFACTORY_ENDPOINT")
+        ART_REPO_LOGIN  = credentials("nr_artifactory_login")
+        ARTIFACTORY_REPO="${ART_REPO_ENDPOINT}/nr-utopia/${API_REPO_NAME}"
     }
 
     stages {
         stage('Setup') {
             steps {
-                sh 'export AWS_PROFILE=nick'
+                sh 'export AWS_PROFILE=$AWS_PROFILE'
             }
         }
-        stage('AWS') {
+        stage('ECR Login') {
             steps {
                echo 'logging in via AWS client'
                sh 'aws ecr get-login-password --region ${AWS_REGION_ID} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ID}.amazonaws.com'
             }
         }
-        stage('Build') {
+        stage('Artifactory Login') {
+            steps {
+                echo 'logging into Artifactory'
+                sh 'echo ${ART_REPO_LOGIN_PSW} | docker login ${ART_REPO_ENDPOINT} --username ${ART_REPO_LOGIN_USR} --password-stdin'
+            }
+        }
+        stage('Build JAR file') {
             steps {
                 sh 'docker context use default'
                 sh "mvn clean package"
@@ -51,25 +65,40 @@ pipeline {
                 }
             }
         }
-        stage('Docker') {
+        stage('Build Docker Image') {
             steps {
                 echo 'Building Docker Image'
                 sh 'docker build -t ${API_REPO_NAME} .'
             }
         }
-        stage('Push Images') {
+        stage('Push To ECR') {
             steps {
                 echo 'Tagging images'
-                sh 'docker tag ${API_REPO_NAME}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ID}.amazonaws.com/${API_REPO_NAME}:latest'
+                sh 'docker tag ${API_REPO_NAME}:latest ${ECR_REPO}/${API_REPO_NAME}:latest'
+                sh 'docker tag ${API_REPO_NAME}:latest ${ECR_REPO}/${API_REPO_NAME}:$COMMIT_HASH'
                 echo 'Pushing images'
-                sh 'docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ID}.amazonaws.com/${API_REPO_NAME}:latest'
+                sh 'docker push ${ECR_REPO}/${API_REPO_NAME}:latest'
+                sh 'docker push ${ECR_REPO}/${API_REPO_NAME}:$COMMIT_HASH'
+            }
+        }
+        stage('Push To Artifactory') {
+            steps {
+                echo 'Tagging images'
+                sh 'docker tag ${API_REPO_NAME}:latest ${ARTIFACTORY_REPO}:latest'
+                sh 'docker tag ${API_REPO_NAME}:latest ${ARTIFACTORY_REPO}:$COMMIT_HASH'
+                echo 'Pushing images'
+                sh 'docker push ${ARTIFACTORY_REPO}:latest'
+                sh 'docker push ${ARTIFACTORY_REPO}:$COMMIT_HASH'
             }
         }
         stage('Cleanup') {
             steps {
                 echo 'Removing images'
                 sh 'docker rmi ${API_REPO_NAME}:latest'
-                sh 'docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ID}.amazonaws.com/${API_REPO_NAME}:latest'
+                sh 'docker rmi ${ECR_REPO}/${API_REPO_NAME}:latest'
+                sh 'docker rmi ${ECR_REPO}/${API_REPO_NAME}:$COMMIT_HASH'
+                sh 'docker rmi ${ARTIFACTORY_REPO}:latest'
+                sh 'docker rmi ${ARTIFACTORY_REPO}:$COMMIT_HASH'
                 sh 'unset AWS_PROFILE'
             }
         }
