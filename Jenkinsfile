@@ -6,14 +6,7 @@ pipeline {
         API_REPO_NAME = 'nr-utopia-user'
         AWS_REGION_ID = "${sh(script:'aws configure get region', returnStdout: true).trim()}"
         AWS_ACCOUNT_ID = "${sh(script:'aws sts get-caller-identity --query "Account" --output text', returnStdout: true).trim()}"
-        UTOPIA_MICROSERVICE_USERS_PORT=credentials('nr_utopia_users_port')
-        UTOPIA_DB_PORT=credentials('nr_utopia_db_port')
-        UTOPIA_DB_HOST=credentials('nr_utopia_db_host')
-        UTOPIA_DB_NAME=credentials('nr_utopia_db_name')
-        UTOPIA_DB_LOGIN=credentials('nr_utopia_db_login')
-        UTOPIA_DB_USER="${env.UTOPIA_DB_LOGIN_USR}"
-        UTOPIA_DB_PASSWORD="${env.UTOPIA_DB_LOGIN_PSW}"
-        UTOPIA_JWT_SECRET=credentials('nr_utopia_jwt_secret')
+        UTOPIA_MICROSERVICE_PORT=credentials('nr_utopia_microservice_port')
         AWS_PROFILE=credentials('nr_aws_profile')
         SONARQUBE_ID = tool name: 'SonarQubeScanner-4.6.2'
 
@@ -27,7 +20,7 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh 'export AWS_PROFILE=$AWS_PROFILE'
+                sh 'export AWS_PROFILE=${AWS_PROFILE}'
             }
         }
         stage('ECR Login') {
@@ -45,7 +38,7 @@ pipeline {
         stage('Build JAR file') {
             steps {
                 sh 'docker context use default'
-                sh "mvn clean package"
+                sh "mvn clean package -DskipTests"
             }
         }
         stage('SonarQube') {
