@@ -64,6 +64,14 @@
 			<version>3.18.2</version>
 		</dependency>
 	</dependencies>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>f33de33cb6e0-snapshots</name>
+			<!--suppress UnresolvedMavenProperty -->
+			<url>${env.ARTIFACTORY_URL}</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<build>
 		<plugins>
